@@ -66,21 +66,8 @@ def get_field_order(fields, nearby_tickets):
         for ticket in nearby_tickets
         if not invalid_values.intersection(ticket)
     ]
-    print("len(valid_tickets) / len(nearby_tickets):", len(valid_tickets) / len(nearby_tickets))
 
-    # remaining_possibilities = set(field.name for field in fields)
-    # field_order = []
-    # for column_idx in range(len(fields)):
-    #     for field in fields:
-    #         if field.name in remaining_possibilities and all(
-    #             any(
-    #                 ticket[column_idx] in arange
-    #                 for arange in field.ranges
-    #             )
-    #             for ticket in valid_tickets
-    #         ):
-    #             field_order.append(field.name)
-    #             remaining_possibilities.discard(field.name)
+    # compute possibilities for each column
     possibilities_by_column_index = [set() for _ in range(len(fields))]
     for column_idx in range(len(fields)):
         for field in fields:
@@ -94,9 +81,7 @@ def get_field_order(fields, nearby_tickets):
                 possibilities_by_column_index[column_idx].add(
                     field.name
                 )
-    # possibilities_by_column_index = sorted(
-        # possibilities_by_column_index, key=len
-    # )
+    # refine possibilities to field order
     field_order = [0] * len(fields)
     while True:
         next_field_names = set()
@@ -116,13 +101,8 @@ def get_field_order(fields, nearby_tickets):
 
                 continue
             possibilities -= next_field_names
-        print("next_field_names:", next_field_names)
         if len(next_field_names) == 0:
             break
-
-    print("field_order:", field_order)
-
-
 
     return field_order
 
