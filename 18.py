@@ -54,7 +54,7 @@ def yield_tokens(string):
 
 ALLOWED_OPERATORS = set('+-*/')
 
-def handle_tokens(token_iter, in_parens=False):
+def handle_tokens1(token_iter, in_parens=False):
     last_op = '*'
     total_so_far = 1
 
@@ -64,7 +64,7 @@ def handle_tokens(token_iter, in_parens=False):
             # handle new operator
             last_op = token
         elif token == '(':
-            token = str(handle_tokens(token_iter, in_parens=True))
+            token = str(handle_tokens1(token_iter, in_parens=True))
         elif in_parens and token == ')':
             return total_so_far  # end earlier recursion
         if token.isnumeric():
@@ -84,10 +84,10 @@ def handle_tokens(token_iter, in_parens=False):
     return total_so_far
 
 
-def weird_math(string):
+def weird_math1(string):
     token_iter = yield_tokens(string)
 
-    total_so_far = handle_tokens(token_iter)
+    total_so_far = handle_tokens1(token_iter)
 
     return total_so_far
 
@@ -96,31 +96,31 @@ if __name__ == "__main__":
     with open('input18.txt', 'rt') as f:
         part1 = 0
         for line in f:
-            part1 += weird_math(line)
+            part1 += weird_math1(line)
         print("part1:", part1)
 
 
 # Test
 
-def test_no_parens():
+def test_part1_no_parens():
     #  1 + 2 * 3 + 4 * 5 + 6
     #   3   * 3 + 4 * 5 + 6
     #       9   + 4 * 5 + 6
     #          13   * 5 + 6
     #              65   + 6
     #                  71
-    assert 71 == weird_math("1 + 2 * 3 + 4 * 5 + 6")
+    assert 71 == weird_math1("1 + 2 * 3 + 4 * 5 + 6")
 
-def test_with_parens():
+def test_part1_with_parens():
     #  1 + (2 * 3) + (4 * (5 + 6))
     #  1 +    6    + (4 * (5 + 6))
     #       7      + (4 * (5 + 6))
     #       7      + (4 *   11   )
     #       7      +     44
     #              51
-    assert 51 == weird_math("1 + (2 * 3) + (4 * (5 + 6))")
+    assert 51 == weird_math1("1 + (2 * 3) + (4 * (5 + 6))")
 
-def test_moar():
+def test_part1_moar():
     cases = """
     1 + 2 * 3 + 4 * 5 + 6 becomes 71
     2 * 3 + (4 * 5) becomes 26
@@ -135,4 +135,4 @@ def test_moar():
         math, _, expected = case.rpartition('becomes')
         print("math:", math)
         print("expected:", expected)
-        assert int(expected) == weird_math(math)
+        assert int(expected) == weird_math1(math)
