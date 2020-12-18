@@ -42,11 +42,14 @@ def yield_tokens(string):
                 token = ''
         elif c.isnumeric():
             token += c
-        elif c in ALLOWED_OPERATORS:
+        else:  # handle things like ( and )
+            if token:
+                yield token
+                token = ''
             yield c
-        else:
-            yield c
-    yield token
+    # the final token after string exhausted
+    if token:
+        yield token
 
 
 ALLOWED_OPERATORS = set('+-*/')
@@ -56,15 +59,15 @@ def handle_tokens(token_iter, in_parens=False):
     total_so_far = 1
 
     for token in token_iter:
-        print("token:", token)
+        # print("in_parens:", in_parens, "token:", token)
         if token in ALLOWED_OPERATORS:
             # handle new operator
             last_op = token
         elif token == '(':
             token = str(handle_tokens(token_iter, in_parens=True))
         elif in_parens and token == ')':
-            return total_so_far
-        elif token.isnumeric():
+            return total_so_far  # end earlier recursion
+        if token.isnumeric():
             # do math
             lhs = total_so_far
             rhs = int(token)
@@ -78,8 +81,6 @@ def handle_tokens(token_iter, in_parens=False):
             elif last_op == '/':
                 new_total = lhs / rhs
             total_so_far = new_total
-        else:
-            raise Exception(f"Unknown token: {token}")
     return total_so_far
 
 
@@ -90,6 +91,16 @@ def weird_math(string):
 
     return total_so_far
 
+
+if __name__ == "__main__":
+    with open('input18.txt', 'rt') as f:
+        part1 = 0
+        for line in f:
+            part1 += weird_math(line)
+        print("part1:", part1)
+
+
+# Test
 
 def test_no_parens():
     #  1 + 2 * 3 + 4 * 5 + 6
@@ -116,10 +127,11 @@ def test_moar():
     5 + (8 * 3 + 9 + 3 * 4 * 3) becomes 437
     5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4)) becomes 12240
     ((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2 becomes 13632
-    """.strip()
+    """.strip().split('\n')
 
     for case in cases:
         case = case.strip()
+        if not case: continue
         math, _, expected = case.rpartition('becomes')
         print("math:", math)
         print("expected:", expected)
