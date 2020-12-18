@@ -2,8 +2,9 @@
 
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
-class Field():
+class Field:
     name: str
     ranges: [range]
 
@@ -20,24 +21,24 @@ def parse_input(data):
 
     # parse fields w/ ranges
     while line := next_line():
-        assert ':' in line
-        name, _, raw_ranges = line.partition(': ')
-        assert ' or ' in raw_ranges
+        assert ":" in line
+        name, _, raw_ranges = line.partition(": ")
+        assert " or " in raw_ranges
         parsed_ranges = []
-        for raw_range in raw_ranges.split(' or '):
-            lower, upper = map(int, raw_range.split('-'))
+        for raw_range in raw_ranges.split(" or "):
+            lower, upper = map(int, raw_range.split("-"))
             upper = upper + 1
             parsed_ranges.append(range(lower, upper))
 
         fields.append(Field(name=name, ranges=tuple(parsed_ranges)))
 
-    assert next_line() == 'your ticket:'
-    your_ticket = [int(item) for item in next_line().split(',')]
-    assert '' == next(line_iter).strip() # skip blank line
+    assert next_line() == "your ticket:"
+    your_ticket = [int(item) for item in next_line().split(",")]
+    assert "" == next(line_iter).strip()  # skip blank line
 
-    assert next_line() == 'nearby tickets:'
+    assert next_line() == "nearby tickets:"
     for line in line_iter:
-        ticket = [int(number) for number in line.strip().split(',')]
+        ticket = [int(number) for number in line.strip().split(",")]
         nearby_tickets.append(ticket)
 
     return fields, your_ticket, nearby_tickets
@@ -62,9 +63,7 @@ def get_field_order(fields, nearby_tickets):
     invalid_values = get_invalid_values(fields, nearby_tickets)
 
     valid_tickets = [
-        ticket
-        for ticket in nearby_tickets
-        if not invalid_values.intersection(ticket)
+        ticket for ticket in nearby_tickets if not invalid_values.intersection(ticket)
     ]
 
     # compute possibilities for each column
@@ -72,15 +71,10 @@ def get_field_order(fields, nearby_tickets):
     for column_idx in range(len(fields)):
         for field in fields:
             if all(
-                any(
-                    ticket[column_idx] in arange
-                    for arange in field.ranges
-                )
+                any(ticket[column_idx] in arange for arange in field.ranges)
                 for ticket in valid_tickets
             ):
-                possibilities_by_column_index[column_idx].add(
-                    field.name
-                )
+                possibilities_by_column_index[column_idx].add(field.name)
     # refine possibilities to field order
     field_order = [0] * len(fields)
     while True:
@@ -110,7 +104,8 @@ def get_field_order(fields, nearby_tickets):
 if __name__ == "__main__":
     import operator
     import functools
-    with open('input16.txt', 'rt') as f:
+
+    with open("input16.txt", "rt") as f:
         fields, your_ticket, nearby_tickets = parse_input(f)
         field_names = [field.name for field in fields]
         invalid_values = get_invalid_values(fields, nearby_tickets)
@@ -121,7 +116,7 @@ if __name__ == "__main__":
         departure_field_names = [
             field_name
             for field_name in field_names
-            if field_name.startswith('departure')
+            if field_name.startswith("departure")
         ]
         print("departure_field_names:", departure_field_names)
         assert 6 == len(departure_field_names)
@@ -135,7 +130,7 @@ if __name__ == "__main__":
         print("departure_field_values:", departure_field_values)
         total = functools.reduce(operator.mul, departure_field_values, 1)
         print("part2:", total)
-        # part2: 1824455538407 incorrect :(
+
 
 def test_parse():
     data = """
@@ -151,16 +146,19 @@ def test_parse():
     40,4,50
     55,2,20
     38,6,12
-    """.strip().split('\n')
+    """.strip().split(
+        "\n"
+    )
     fields, your_ticket, nearby_tickets = parse_input(data)
-    assert ['class', 'row', 'seat'] == [field.name for field in fields]
-    assert [7,1,14] == your_ticket
+    assert ["class", "row", "seat"] == [field.name for field in fields]
+    assert [7, 1, 14] == your_ticket
     assert nearby_tickets == [
-        [7,3,47],
-        [40,4,50],
-        [55,2,20],
-        [38,6,12],
+        [7, 3, 47],
+        [40, 4, 50],
+        [55, 2, 20],
+        [38, 6, 12],
     ]
+
 
 def test_part1():
     data = """
@@ -176,9 +174,12 @@ def test_part1():
     40,4,50
     55,2,20
     38,6,12
-    """.strip().split('\n')
+    """.strip().split(
+        "\n"
+    )
     fields, your_ticket, nearby_tickets = parse_input(data)
     assert {4, 55, 12} == get_invalid_values(fields, nearby_tickets)
+
 
 def test_part2():
     data = """
@@ -193,8 +194,12 @@ def test_part2():
     3,9,18
     15,1,5
     5,14,9
-    """.strip().split('\n')
+    """.strip().split(
+        "\n"
+    )
     fields, your_ticket, nearby_tickets = parse_input(data)
     field_order = get_field_order(fields, nearby_tickets)
-    assert ['row', 'class', 'seat'] == field_order
-    assert [11, 12, 13] == [your_ticket[field_order.index(field_name)] for field_name in field_order]
+    assert ["row", "class", "seat"] == field_order
+    assert [11, 12, 13] == [
+        your_ticket[field_order.index(field_name)] for field_name in field_order
+    ]
