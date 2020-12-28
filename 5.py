@@ -1,59 +1,65 @@
 #!/usr/bin/env python3
 
+
+def get_param_from_prog(param_num, prog, ip):
+    # determine param modes
+    current = prog[ip]
+    param1_mode = current % 1000 // 100
+    param2_mode = current % 10000 // 1000
+    param3_mode = current // 10000
+    assert param_num < 3
+
+    # print("modes:", [param1_mode, param2_mode, param3_mode], ' ', end='')
+    raw_param = prog[ip + param_num]
+    param_mode = locals()[f'param{param_num}_mode']
+
+    # 1 is "value"
+    result = None
+    if 0 == param_mode:         # position in prog
+        result = prog[raw_param]
+    elif 1 == param_mode:       # value
+        result = raw_param
+    else:
+        raise Exception(f"Unknown Param mode {param_mode} @ {ip}: {current}")
+
+    # print(f"{param_num=}, {param_mode=}, {result=}")
+    return result
+
+num_params_by_opcode = {
+    1: 3,
+    2: 3,
+    3: 1,
+    4: 1,
+    5: 2,
+    6: 2,
+    7: 3,
+    8: 3,
+}
 def intcode(prog, input_list=None):
     ip = 0
 
-    while (current := prog[ip]) != 99:
+    # so lower calls don't have to pass prog and ip
+    def param(param_num):
+        return get_param_from_prog(param_num, prog, ip)
+
+    while (current := prog[ip]):
         opcode = current % 100
-        # determine param modes
-        # 0 is "position"
-        # 1 is "value"
-        param1_mode = current % 1000 // 100
-        param2_mode = current % 10000 // 1000
-        param3_mode = current // 10000
-        # print("IP:", ip, end=' ')
-        # print("modes:", [param1_mode, param2_mode, param3_mode], ' ', end='')
+        # default for next_ip (adding 1 to skip opcode itself)
+        next_ip = ip + 1 + num_params_by_opcode.get(opcode, 0)
         if opcode == 1:
-            # print("ADD: ", prog[ip:ip + 4])
-            param1, param2, param3 = prog[ip+1:ip+4]
-            assert 0 == param3_mode, "param3 mode should be zero in an add"
-            assert param3 >= 0, "add: outaddr should be >= 0"
-            # adjust lhs, rhs, outaddr based on param modes
-            if param1_mode == 0:   # position
-                lhs = prog[param1]
-            elif param1_mode == 1: # value
-                lhs = param1
-            else:
-                raise Exception(f"Unknown Param mode {param1_mode} @ {ip}: {current}")
-            if param2_mode == 0:   # position
-                rhs = prog[param2]
-            elif param2_mode == 1: # value
-                rhs = param2
-            else:
-                raise Exception(f"Unknown Param mode {param2_mode} @ {ip}: {current}")
+            lhs = param(1)
+            rhs = param(2)
+            param3 = prog[ip + 3]
+            assert param3 >= 0, "ADD: outaddr should be >= 0"
             prog[param3] = lhs + rhs
-            ip += 4
             # print("ADD: ", prog[ip:ip + 4], f"prog[{param3}] = {lhs} + {rhs} = {lhs + rhs}")
         elif opcode == 2:
-            param1, param2, param3 = prog[ip + 1:ip + 4]
-            assert 0 == param3_mode, "mut: param3 mode should be zero"
-            assert param3 >= 0, "mult: outaddr should be >= 0"
-            # adjust lhs, rhs, outaddr based on param modes
-            if param1_mode == 0:   # position
-                lhs = prog[param1]
-            elif param1_mode == 1: # value
-                lhs = param1
-            else:
-                raise Exception(f"Unknown Param mode {param1_mode} @ {ip}: {current}")
-            if param2_mode == 0:   # position
-                rhs = prog[param2]
-            elif param2_mode == 1: # value
-                rhs = param2
-            else:
-                raise Exception(f"Unknown Param mode {param2_mode} @ {ip}: {current}")
+            lhs = param(1)
+            rhs = param(2)
+            param3 = prog[ip + 3]
+            assert param3 >= 0, "MUL: param3 should be >= 0"
             prog[param3] = lhs * rhs
             # print("MULT: ", prog[ip:ip + 4], f"prog[{param3}] = {lhs} * {rhs} = {lhs * rhs}")
-            ip += 4
         elif opcode == 3:
             # print("IN:", prog[ip:ip + 2])
             if input_list:
@@ -61,23 +67,59 @@ def intcode(prog, input_list=None):
             else:
                 read = input("input? ")
             prog[prog[ip + 1]] = int(read)
-            ip += 2
         elif opcode == 4:
             # print("OUT:", prog[ip:ip + 2])
-            to_out = prog[prog[ip + 1]]
+            to_out = param(1)
             print(to_out)
-            ip += 2
+        elif opcode == 5: # jmp if nonzero
+            if param(1) != 0:
+                next_ip = param(2)
+        elif opcode == 6: # jmp if zero
+            if param(1) == 0:
+                next_ip = param(2)
+        elif opcode == 7: # prog[param3] = 1 if first < second else 0
+            first = param(1)
+            second = param(2)
+            prog[prog[ip + 3]] = 1 if first < second else 0
+        elif opcode == 8: # prog[param3] = 1 if first == second else 0
+            first = param(1)
+            second = param(2)
+            prog[prog[ip + 3]] = 1 if first == second else 0
+        elif opcode == 99:
+            print(f"(HALT @ {ip})")
+            break
         else:
             raise Exception(f"Unknown opcode: {opcode} @ {ip}: {current}")
+        ip = next_ip
     return prog
 
-def test1():
+
+if __name__ == '__main__':
+    with open('input05.txt', 'rt') as f:
+        orig_prog = [int(e) for e in f.read().split(',')]
+        # print("len(orig_prog):", len(orig_prog))
+        print("part1:")
+        intcode(orig_prog.copy(), input_list=[1])
+        print("part2:")
+        intcode(orig_prog.copy(), input_list=[5])
+
+        # run part2 after result of part1
+        # prog = [int(e) for e in f.read().split(',')]
+        # print("len(prog):", len(prog))
+        # print("part1:")
+        # intcode(prog, input_list=[1])
+        # print("part2:")
+        # intcode(prog, input_list=[5])
+
+
+# Tests
+def test_pos_add():
+    # adds prog[0] + prog[0] and stores @ prog[0]
     prog = [1,0,0,0,99]
-    expected = [2,0,0,0,99]
-    assert expected == intcode(prog)
+    assert [2,0,0,0,99] == intcode(prog)
 
 
-def test2():
+def test_pos_mult():
     prog = [2,3,0,3,99]
     expected = [2,3,0,6,99]
     assert expected == intcode(prog)
@@ -123,9 +165,3 @@ def test_input():
         should set 3 to input (42)""".strip()
     assert len(input_list) == 0, "should read all input"
 
-if __name__ == '__main__':
-    with open('input05.txt', 'rt') as f:
-        prog = [int(e) for e in f.read().split(',')]
-        print("len(prog):", len(prog))
-        print("part1:")
-        intcode(prog, input_list=[1])
