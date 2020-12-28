@@ -125,10 +125,26 @@ if __name__ == '__main__':
     print("max_signal:", max_signal)
 
 # Tests
-def test_example1():
+def test_get_thruster_signal1():
     expected = 43210
     prog = [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]
     phase_settings = 4,3,2,1,0
+    assert expected == get_thruster_signal(phase_settings, prog)
+
+
+def test_get_thruster_signal2():
+    expected = 54321
+    phase_settings = 0,1,2,3,4
+    prog = [3,23,3,24,1002,24,10,24,1002,23,-1,23,
+            101,5,23,23,1,24,23,23,4,23,99,0,0]
+    assert expected == get_thruster_signal(phase_settings, prog)
+
+
+def test_get_thruster_signal3():
+    expected = 65210
+    phase_settings = 1,0,4,3,2
+    prog = [3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,
+            1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0]
     assert expected == get_thruster_signal(phase_settings, prog)
 
 
@@ -143,14 +159,6 @@ def test_example1_find_phase_sequence_with_max_thruster_signal():
     assert actual_phase_setting == actual_phase_setting
 
 
-def test_example2():
-    expected = 54321
-    phase_settings = 0,1,2,3,4
-    prog = [3,23,3,24,1002,24,10,24,1002,23,-1,23,
-            101,5,23,23,1,24,23,23,4,23,99,0,0]
-    assert expected == get_thruster_signal(phase_settings, prog)
-
-
 def test_example2_find_phase_sequence_with_max_thruster_signal():
     prog = [3,23,3,24,1002,24,10,24,1002,23,-1,23,
             101,5,23,23,1,24,23,23,4,23,99,0,0]
@@ -161,14 +169,6 @@ def test_example2_find_phase_sequence_with_max_thruster_signal():
     )
     assert expected_max_signal == actual_max_signal
     assert actual_phase_setting == actual_phase_setting
-
-
-def test_example3():
-    expected = 65210
-    phase_settings = 1,0,4,3,2
-    prog = [3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,
-            1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0]
-    assert expected == get_thruster_signal(phase_settings, prog)
 
 
 def test_example3_find_phase_sequence_with_max_thruster_signal():
