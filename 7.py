@@ -91,30 +91,22 @@ def intcode(prog, input_list=None):
         else:
             raise Exception(f"Unknown opcode: {opcode} @ {ip}: {current}")
         ip = next_ip
-    return output[-1]
+    return output
 
 
-def get_thruster_signal(phase_settings, prog):
-    last_output = 0
-    for phase_setting in phase_settings:
-        last_output = intcode(prog.copy(), input_list=[phase_setting, last_output])
-    #     print(f"{phase_setting=} {last_output=}")
-    # print("last_output:", last_output)
-    return last_output
+def get_thruster_signal(phase_setting_sequence, prog):
+    last_output = [0]
+    for phase_setting in phase_setting_sequence:
+        last_output = intcode(prog.copy(), input_list=[phase_setting, last_output[-1]])
+    return last_output[-1]
+
 
 import itertools
 def find_phase_sequence_with_max_thruster_signal(prog):
     max_output_signal = 0
     max_phase_setting = None
     for phase_setting_sequence in itertools.permutations([0,1,2,3,4]):
-        output_signal = 0
-        last_output = 0
-        for phase_setting in phase_setting_sequence:
-            last_output = intcode(
-                prog.copy(),
-                input_list=[phase_setting, last_output]
-            )
-        output_signal = last_output
+        output_signal = get_thruster_signal(phase_setting_sequence, prog)
         if output_signal > max_output_signal:
             max_phase_setting = phase_setting_sequence
             max_output_signal = output_signal
