@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 
 NUM_AMPLIFIERS = 5
 
@@ -94,7 +95,7 @@ def intcode(prog, input_list=None):
             second = param(2)
             prog[prog[ip + 3]] = 1 if first == second else 0
         elif opcode == 99:
-            print(f"Halt @ {ip}")
+            # print(f"Halt @ {ip}", file=sys.stderr)
             break
         else:
             raise Exception(f"Unknown opcode: {opcode} @ {ip}: {current}")
@@ -157,15 +158,15 @@ def find_phase_sequence_with_max_thruster_signal(prog):
 def find_phase_sequence_with_max_thruster_signal_with_feedback(prog):
     max_output_signal = 0
     max_phase_setting = None
-    for phase_setting_sequence in itertools.permutations([5,6,7,8,9]):
-        output_signal = get_thruster_signal(phase_setting_sequence, prog)
+    for phase_setting in itertools.permutations([5,6,7,8,9]):
+        output_signal = get_thruster_signal_with_feedback(phase_setting, prog)
         if output_signal > max_output_signal:
-            max_phase_setting = phase_setting_sequence
+            max_phase_setting = phase_setting
             max_output_signal = output_signal
     return max_phase_setting, max_output_signal
 
 
-
+import pytest
 if __name__ == '__main__':
     with open('input07.txt', 'rt') as f:
         prog = [int(e) for e in f.read().split(',')]
@@ -173,15 +174,22 @@ if __name__ == '__main__':
     phase_setting, max_signal = find_phase_sequence_with_max_thruster_signal(
         prog.copy()
     )
-    print("part1")
+    print("part1:")
+    print("phase_setting:", phase_setting)
+    print("max_signal:", max_signal)
+    print("\npart2:")
+    phase_setting, max_signal = find_phase_sequence_with_max_thruster_signal_with_feedback(
+        prog.copy()
+    )
     print("phase_setting:", phase_setting)
     print("max_signal:", max_signal)
 
 # Tests
+import pytest
 def test_get_thruster_signal1():
     expected = 43210
-    prog = [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]
     phase_settings = 4,3,2,1,0
+    prog = [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]
     assert expected == get_thruster_signal(phase_settings, prog)
 
 
@@ -252,25 +260,49 @@ def test_get_thruster_signal_with_feedback2():
     assert expected == get_thruster_signal_with_feedback(phase_settings, prog)
 
 
-def test_find_phase_sequence_with_max_thruster_signal_example1():
-    prog = [3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,
-            -5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,
-            53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10]
-    expected_max_signal = 118216
-    expected_phase_setting = 9,7,8,5,6
-    actual_phase_setting, actual_max_signal = find_phase_sequence_with_max_thruster_signal(
-        prog
-    )
-    assert expected_max_signal == actual_max_signal
-    assert actual_phase_setting == actual_phase_setting
+# def test_find_phase_sequence_with_max_thruster_signal_with_feedback_example1():
+#     prog = [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
+#             27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
+#     expected_max_signal = 139629729
+#     expected_phase_setting = 9,8,7,6,5
+#     actual_phase_setting, actual_max_signal = find_phase_sequence_with_max_thruster_signal(
+#         prog
+#     )
+#     assert expected_max_signal == actual_max_signal
+#     assert actual_phase_setting == actual_phase_setting
 
-def test_find_phase_sequence_with_max_thruster_signal_example1():
-    prog = [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
-            27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
-    expected_max_signal = 5139629729
-    expected_phase_setting = 9,8,7,6,5
-    actual_phase_setting, actual_max_signal = find_phase_sequence_with_max_thruster_signal(
-        prog
+# def test_find_phase_sequence_with_max_thruster_signal_with_feedback2():
+#     prog = [3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,
+#             -5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,
+#             53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10]
+#     expected_max_signal = 118216
+#     expected_phase_setting = 9,7,8,5,6
+#     actual_phase_setting, actual_max_signal = find_phase_sequence_with_max_thruster_signal(
+#         prog
+#     )
+#     assert expected_max_signal == actual_max_signal
+#     assert actual_phase_setting == actual_phase_setting
+
+@pytest.mark.parametrize("kwargs", [
+    {
+        "expected_max_signal": 139629729,
+        "expected_phase_setting": [9,8,7,6,5],
+        "prog": [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
+                 27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
+    },
+    {
+        "expected_max_signal": 18216,
+        "expected_phase_setting": [9,8,7,6,5],
+        "prog": [3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,
+                 -5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,
+                 53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10]
+    },
+])
+def test_find_phase_sequence_with_max_thruster_signal_with_feedback_example(kwargs):
+    expected_max_signal = kwargs['expected_max_signal']
+    expected_phase_setting = kwargs['expected_phase_setting']
+    actual_phase_setting, actual_max_signal = find_phase_sequence_with_max_thruster_signal_with_feedback(
+        kwargs['prog']
     )
     assert expected_max_signal == actual_max_signal
     assert actual_phase_setting == actual_phase_setting
