@@ -123,7 +123,9 @@ if __name__ == '__main__':
         print("part1:")
         output = intcode(prog, input_list=[1])
         print("output:", output)
-
+        print("part2:")
+        output = intcode(prog)
+        print("output:", output)
 
 
 # Tests
