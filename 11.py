@@ -3,123 +3,10 @@
 # part1
 painted_white = set([])
 # part2
-painted_white = set([(0, 0)])
+# painted_white = set([(0, 0)])
 
 
-def get_param_from_prog(param_num, prog, ip, relative_base):
-    # determine param modes
-    current = prog[ip]
-    param1_mode = current % 1000 // 100
-    param2_mode = current % 10000 // 1000
-    param3_mode = current // 10000
-    assert param_num < 3
-
-    raw_param = prog[ip + param_num]
-    param_mode = locals()[f'param{param_num}_mode']
-
-    result = None
-    if 0 == param_mode:         # position in prog
-        result = prog[raw_param]
-    elif 1 == param_mode:       # value
-        result = raw_param
-    elif 2 == param_mode:
-        result = prog[raw_param + relative_base]
-    else:
-        raise Exception(f"Unknown Param mode {param_mode} @ {ip}: {current}")
-
-    # print(f"{param_num=}, {param_mode=}, {result=}")
-    return result
-
-
-NUM_PARAMS_BY_OPCODE = {
-    1: 3,
-    2: 3,
-    3: 1,
-    4: 1,
-    5: 2,
-    6: 2,
-    7: 3,
-    8: 3,
-    9: 1,
-    99: 1,
-}
-def intcode(orig_prog, input_list=None, trace=False):
-    ip = 0
-    output = []
-    relative_base = 0
-
-    prog = [0] * 65536
-    # copy orig_prog to prog
-    for i, value in enumerate(orig_prog):
-        prog[i] = value
-
-    # so lower calls don't have to pass prog and ip
-    def param(param_num):
-        return get_param_from_prog(param_num, prog, ip, relative_base)
-
-    def update_memory(address, value):
-        if current > 20000:
-            address += relative_base
-        assert address >= 0, "dest address should be zero"
-        prog[address] = value
-
-    while (current := prog[ip]):
-        opcode = current % 100
-        # default for next_ip (adding 1 to skip opcode itself)
-        next_ip = ip + 1 + NUM_PARAMS_BY_OPCODE.get(opcode, 0)
-
-        if trace:
-            instruction_size = 1 + NUM_PARAMS_BY_OPCODE.get(opcode, 0)
-            full_instruction = prog[ip:ip + instruction_size]
-            print(f"{ip:04d}: {full_instruction}")
-
-        if opcode == 1:
-            lhs = param(1)
-            rhs = param(2)
-            param3 = prog[ip + 3]
-            update_memory(param3, lhs + rhs)
-            # print("ADD: ", prog[ip:ip + 4], f"prog[{param3}] = {lhs} + {rhs} = {lhs + rhs}")
-        elif opcode == 2:
-            lhs = param(1)
-            rhs = param(2)
-            param3 = prog[ip + 3]
-            update_memory(param3, lhs * rhs)
-            # print("MULT: ", prog[ip:ip + 4], f"prog[{param3}] = {lhs} * {rhs} = {lhs * rhs}")
-        elif opcode == 3:
-            if input_list:
-                read_value = input_list.pop(0)
-            else:
-                read_value = (yield)
-            if read_value is None:
-                raise Exception("hell")
-            if current > 200:
-                prog[prog[ip + 1] + relative_base] = int(read_value)
-            else:
-                prog[prog[ip + 1]] = int(read_value)
-        elif opcode == 4:
-            to_out = param(1)
-            yield to_out
-        elif opcode == 5: # jmp if nonzero
-            if param(1) != 0:
-                next_ip = param(2)
-        elif opcode == 6: # jmp if zero
-            if param(1) == 0:
-                next_ip = param(2)
-        elif opcode == 7: # prog[param3] = 1 if first < second else 0
-            first = param(1)
-            second = param(2)
-            update_memory(prog[ip + 3], 1 if first < second else 0)
-        elif opcode == 8: # prog[param3] = 1 if first == second else 0
-            first = param(1)
-            second = param(2)
-            update_memory(prog[ip + 3], 1 if first == second else 0)
-        elif opcode == 9:
-            relative_base += param(1)
-        elif opcode == 99:
-            break
-        else:
-            raise Exception(f"Unknown opcode: {opcode} @ {ip}: {current}")
-        ip = next_ip
+from intcode import intcode
 
 
 direction_possibilities_by_current_direction = {
@@ -204,27 +91,21 @@ while True:
 
 def paint(painted_white, painted_black):
     painted = painted_white | painted_black
-    min_x = min(x for x, y in painted)
-    max_x = max(x for x, y in painted)
+    min_x = min(x for x, _ in painted)
+    max_x = max(x for x, _ in painted)
 
-    min_y = min(y for x, y in painted)
-    max_y = max(y for x, y in painted)
-
+    min_y = min(y for _, y in painted)
+    max_y = max(y for _, y in painted)
 
     x_range = max_x - min_x
     y_range = max_y - min_y
 
-    # print(f"{min_x=} {max_x=} {min_y=} {max_y=} {x_range=} {y_range=}")
-    # for y in range(min_y, max_y + 1):
+    print(f"{min_x=} {max_x=} {min_y=} {max_y=} {x_range=} {y_range=}")
+    for y in range(min_y, max_y + 1):
     # flip painting vertically
-    for y in range(max_y + 1, min_y - 1, -1):
-        adj_y = y + min_y
-        adj_y = y
+    # for y in range(max_y + 1, min_y - 1, -1):
         for x in range(min_x, max_x + 1):
-            adj_x = x + min_x
-            adj_x = x
-            # print("adj_x", adj_x, "adj_y", adj_y)
-            if (adj_x, adj_y) in painted_white:
+            if (x, y) in painted_white:
                 draw = '#'
             else:
                 draw = ' '
