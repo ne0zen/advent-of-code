@@ -29,10 +29,10 @@ def find_int_range(raw_data, preamble_size=25):
         while True:
             size += 1
             stuff = data[i:i+size]
-            if ((sum_stuff := sum(stuff)) >= vuln):
+            if (sum_stuff := sum(stuff)) == vuln:
+                return stuff
+            elif sum_stuff > vuln:
                 break
-        if sum_stuff == vuln:
-            return stuff
         i += 1
 
 
