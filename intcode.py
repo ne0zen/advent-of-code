@@ -61,10 +61,10 @@ def intcode(orig_prog, input_list=None, trace=False):
     while (current := prog[ip]):
         opcode = current % 100
         # default for next_ip (adding 1 to skip opcode itself)
-        next_ip = ip + 1 + NUM_PARAMS_BY_OPCODE.get(opcode, 0)
+        instruction_size = 1 + NUM_PARAMS_BY_OPCODE.get(opcode, 0)
+        next_ip = ip + instruction_size
 
         if trace:
-            instruction_size = 1 + NUM_PARAMS_BY_OPCODE.get(opcode, 0)
             full_instruction = prog[ip:ip + instruction_size]
             print(f"{ip:04d}: {full_instruction}")
 

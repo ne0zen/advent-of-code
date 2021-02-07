@@ -5,101 +5,101 @@ import sys
 NUM_AMPLIFIERS = 5
 
 
-def get_param_from_prog(param_num, prog, ip):
-    # determine param modes
-    current = prog[ip]
-    param1_mode = current % 1000 // 100
-    param2_mode = current % 10000 // 1000
-    param3_mode = current // 10000
-    assert param_num < 3
+# def get_param_from_prog(param_num, prog, ip):
+#     # determine param modes
+#     current = prog[ip]
+#     param1_mode = current % 1000 // 100
+#     param2_mode = current % 10000 // 1000
+#     param3_mode = current // 10000
+#     assert param_num < 3
 
-    # print("modes:", [param1_mode, param2_mode, param3_mode], ' ', end='')
-    raw_param = prog[ip + param_num]
-    param_mode = locals()[f'param{param_num}_mode']
+#     # print("modes:", [param1_mode, param2_mode, param3_mode], ' ', end='')
+#     raw_param = prog[ip + param_num]
+#     param_mode = locals()[f'param{param_num}_mode']
 
-    # 1 is "value"
-    result = None
-    if 0 == param_mode:         # position in prog
-        result = prog[raw_param]
-    elif 1 == param_mode:       # value
-        result = raw_param
-    else:
-        raise Exception(f"Unknown Param mode {param_mode} @ {ip}: {current}")
+#     # 1 is "value"
+#     result = None
+#     if 0 == param_mode:         # position in prog
+#         result = prog[raw_param]
+#     elif 1 == param_mode:       # value
+#         result = raw_param
+#     else:
+#         raise Exception(f"Unknown Param mode {param_mode} @ {ip}: {current}")
 
-    # print(f"{param_num=}, {param_mode=}, {result=}")
-    return result
+#     # print(f"{param_num=}, {param_mode=}, {result=}")
+#     return result
 
 
-NUM_PARAMS_BY_OPCODE = {
-    1: 3,
-    2: 3,
-    3: 1,
-    4: 1,
-    5: 2,
-    6: 2,
-    7: 3,
-    8: 3,
-}
-def intcode(prog, input_list=None):
-    ip = 0
-    output = []
+# NUM_PARAMS_BY_OPCODE = {
+#     1: 3,
+#     2: 3,
+#     3: 1,
+#     4: 1,
+#     5: 2,
+#     6: 2,
+#     7: 3,
+#     8: 3,
+# }
+# def intcode(prog, input_list=None):
+#     ip = 0
+#     output = []
 
-    # so lower calls don't have to pass prog and ip
-    def param(param_num):
-        return get_param_from_prog(param_num, prog, ip)
+#     # so lower calls don't have to pass prog and ip
+#     def param(param_num):
+#         return get_param_from_prog(param_num, prog, ip)
 
-    while (current := prog[ip]):
-        opcode = current % 100
-        # default for next_ip (adding 1 to skip opcode itself)
-        next_ip = ip + 1 + NUM_PARAMS_BY_OPCODE.get(opcode, 0)
-        if opcode == 1:
-            lhs = param(1)
-            rhs = param(2)
-            param3 = prog[ip + 3]
-            assert param3 >= 0, "ADD: outaddr should be >= 0"
-            prog[param3] = lhs + rhs
-            # print("ADD: ", prog[ip:ip + 4], f"prog[{param3}] = {lhs} + {rhs} = {lhs + rhs}")
-        elif opcode == 2:
-            lhs = param(1)
-            rhs = param(2)
-            param3 = prog[ip + 3]
-            assert param3 >= 0, "MUL: param3 should be >= 0"
-            prog[param3] = lhs * rhs
-            # print("MULT: ", prog[ip:ip + 4], f"prog[{param3}] = {lhs} * {rhs} = {lhs * rhs}")
-        elif opcode == 3:
-            # print("IN:", prog[ip:ip + 2])
-            if input_list:
-                read_value =  input_list.pop(0)
-            else:
-                read_value = yield
-            if read_value is None:
-                raise Exception("hell")
-            prog[prog[ip + 1]] = int(read_value)
-        elif opcode == 4:
-            # print("OUT:", prog[ip:ip + 2])
-            to_out = param(1)
-            output.append(to_out)
-            yield to_out
-        elif opcode == 5: # jmp if nonzero
-            if param(1) != 0:
-                next_ip = param(2)
-        elif opcode == 6: # jmp if zero
-            if param(1) == 0:
-                next_ip = param(2)
-        elif opcode == 7: # prog[param3] = 1 if first < second else 0
-            first = param(1)
-            second = param(2)
-            prog[prog[ip + 3]] = 1 if first < second else 0
-        elif opcode == 8: # prog[param3] = 1 if first == second else 0
-            first = param(1)
-            second = param(2)
-            prog[prog[ip + 3]] = 1 if first == second else 0
-        elif opcode == 99:
-            # print(f"Halt @ {ip}", file=sys.stderr)
-            break
-        else:
-            raise Exception(f"Unknown opcode: {opcode} @ {ip}: {current}")
-        ip = next_ip
+#     while (current := prog[ip]):
+#         opcode = current % 100
+#         # default for next_ip (adding 1 to skip opcode itself)
+#         next_ip = ip + 1 + NUM_PARAMS_BY_OPCODE.get(opcode, 0)
+#         if opcode == 1:
+#             lhs = param(1)
+#             rhs = param(2)
+#             param3 = prog[ip + 3]
+#             assert param3 >= 0, "ADD: outaddr should be >= 0"
+#             prog[param3] = lhs + rhs
+#             # print("ADD: ", prog[ip:ip + 4], f"prog[{param3}] = {lhs} + {rhs} = {lhs + rhs}")
+#         elif opcode == 2:
+#             lhs = param(1)
+#             rhs = param(2)
+#             param3 = prog[ip + 3]
+#             assert param3 >= 0, "MUL: param3 should be >= 0"
+#             prog[param3] = lhs * rhs
+#             # print("MULT: ", prog[ip:ip + 4], f"prog[{param3}] = {lhs} * {rhs} = {lhs * rhs}")
+#         elif opcode == 3:
+#             # print("IN:", prog[ip:ip + 2])
+#             if input_list:
+#                 read_value =  input_list.pop(0)
+#             else:
+#                 read_value = yield
+#             if read_value is None:
+#                 raise Exception("hell")
+#             prog[prog[ip + 1]] = int(read_value)
+#         elif opcode == 4:
+#             # print("OUT:", prog[ip:ip + 2])
+#             to_out = param(1)
+#             output.append(to_out)
+#             yield to_out
+#         elif opcode == 5: # jmp if nonzero
+#             if param(1) != 0:
+#                 next_ip = param(2)
+#         elif opcode == 6: # jmp if zero
+#             if param(1) == 0:
+#                 next_ip = param(2)
+#         elif opcode == 7: # prog[param3] = 1 if first < second else 0
+#             first = param(1)
+#             second = param(2)
+#             prog[prog[ip + 3]] = 1 if first < second else 0
+#         elif opcode == 8: # prog[param3] = 1 if first == second else 0
+#             first = param(1)
+#             second = param(2)
+#             prog[prog[ip + 3]] = 1 if first == second else 0
+#         elif opcode == 99:
+#             # print(f"Halt @ {ip}", file=sys.stderr)
+#             break
+#         else:
+#             raise Exception(f"Unknown opcode: {opcode} @ {ip}: {current}")
+#         ip = next_ip
 
 
 def get_thruster_signal(phase_setting_sequence, prog):
@@ -142,6 +142,7 @@ def get_thruster_signal_with_feedback(phase_setting_sequence, prog):
         pass
     return outputs[-1]
 
+from intcode import intcode
 
 import itertools
 def find_phase_sequence_with_max_thruster_signal(prog):
