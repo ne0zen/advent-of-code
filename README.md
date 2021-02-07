@@ -1,9 +1,8 @@
 # advent-of-code
-Advent Of Code Exercises
 
 My solutions to https://adventofcode.com/
 
-Not always, but often, tests
+Python3.  Not always, but often, tests
 
 Goals:
 
