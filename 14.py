@@ -94,9 +94,6 @@ def run2(program):
             value = int(data['value'])
             # determine dest addresses
             addresses = determine_dest_addresses(mask, orig_address)
-            # print("value:", value)
-            # print("addresses:")
-            # from pprint import pprint; pprint(addresses)
             # perform write(s)
             for key in addresses:
                 mem[key] = value
@@ -119,6 +116,8 @@ def determine_dest_addresses(mask, orig_address):
 
     x_positions = [i for i,bit in enumerate(mask) if bit == 'X']
 
+    # value is a counter which tells us which X bits for a
+    # particular destination are 0 and which are 1
     for value in range(2**len(x_positions)):
         destination = copy.deepcopy(masked_destination)
         bitstring = list(format(value, f'0{len(x_positions)}b'))
@@ -195,4 +194,3 @@ mem[26] = 1
     """
     mem = run2(program)
     assert 208 == sum(mem.values())
-
