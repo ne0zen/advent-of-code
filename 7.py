@@ -67,7 +67,9 @@ def build_children_by_parent_color(rules):
     children_by_parent_color = collections.defaultdict(list)
     for rule in rules:
         rule = rule.strip()
+        # first two words
         parent_color = re.match(r'\w+\s\w+', rule).group()
+        # number followed by two words
         child_matches = re.findall(r'(\d+)\s(\w+\s\w+)', rule)
 
         children_by_parent_color[parent_color] = [
