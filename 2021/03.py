@@ -25,52 +25,35 @@ def life_support_rating(data):
     data = [line.strip() for line in data]
 
     line_len = len(data[0])
-    g_bits = []
-    s_bits = []
 
-    g_data = data.copy()
-    for bitpos in range(line_len):
-        bitpos_data = [line[bitpos] for line in g_data]
-        num1s = bitpos_data.count('1')
-        num0s = bitpos_data.count('0')
-        # print(f"{num1s=} {num0s=}")
+    def oxygen_rate_bit_criteria(num0s, num1s):
+        return '1' if num1s >= num0s else '0'
 
-        g_bit = '1' if num1s >= num0s else '0'
-        # print(f"before: {g_bit=} {g_data=}")
-        g_data = list(filter(
-            lambda row: row[bitpos] == g_bit,
-            g_data
-        ))
-        # print(f"after: {g_bit=} {g_data=}")
-        if len(g_data) == 1:
-            break
+    def co2_scrubber_bit_criteria(num0s, num1s):
+        return '0' if num0s <= num1s else '1'
 
-    s_data = data.copy()
-    for bitpos in range(line_len):
-        bitpos_data = [line[bitpos] for line in s_data]
-        num1s = bitpos_data.count('1')
-        num0s = bitpos_data.count('0')
-        # print(f"{num1s=} {num0s=}")
+    def determine_rate(data, bit_criteria):
+        data = data.copy()
+        for bitpos in range(line_len):
+            if len(data) == 1:
+                break
+            bitpos_data = [line[bitpos] for line in data]
+            num1s = bitpos_data.count('1')
+            num0s = bitpos_data.count('0')
+            # print(f"{num1s=} {num0s=}")
 
-        s_bit = '0' if num0s <= num1s else '1'
-        s_data = list(filter(
-            lambda row: row[bitpos] == s_bit,
-            s_data
-        ))
-        # print(f"{bitpos=} {s_data=}")
-        if len(s_data) == 1:
-            break
+            bit = bit_criteria(num0s, num1s)
+            data = list(filter(
+                lambda row: row[bitpos] == bit,
+                data
+            ))
+            # print(f"{bitpos=} {data=}")
+        return data[0]
 
-    return int(g_data[0], 2), int(s_data[0], 2)
+    g_rate = determine_rate(data, oxygen_rate_bit_criteria)
+    s_rate = determine_rate(data, co2_scrubber_bit_criteria)
 
-
-if __name__ == "__main__":
-    with open('input03.txt', 'rt') as f:
-        g, e = power_consumption(f)
-        print("part1:", g * e)
-        f.seek(0)
-        g, s = life_support_rating(f)
-        print("part2:", g * s)
+    return int(g_rate, 2), int(s_rate, 2)
 
 
 import io     # for StringIO
@@ -111,3 +94,12 @@ def run_around_tests():
     yield
     # run after
     sample.seek(0)
+
+
+if __name__ == "__main__":
+    with open('input03.txt', 'rt') as f:
+        g, e = power_consumption(f)
+        print("part1:", g * e)
+        f.seek(0)
+        g, s = life_support_rating(f)
+        print("part2:", g * s)
