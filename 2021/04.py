@@ -90,7 +90,37 @@ def has_win(board):
     return None
 
 
-def determine_win(data):
+def determine_last_win(data):
+    data = [line.strip() for line in data]
+    boards, moves = parse(data)
+
+    win_state = [False for _ in range(len(boards))]
+
+    last_winner = None
+    for move in moves:
+        for i, board in enumerate(boards):
+            board = apply_move(board, move)
+            if has_win(board):
+                # print(f"board #{i} won")
+                win_state[i] = True
+                if all(win_state):
+                    last_winner = board
+                    last_move = move
+                    break
+        # dump_state(boards, move)
+        if last_winner:
+            break
+
+    winning_score = sum(
+        last_winner[y][x][0]
+        for x in range(BOARD_SIZE)
+        for y in range(BOARD_SIZE)
+        if last_winner[y][x][1] == False
+    )
+    return winning_score, last_move
+
+
+def determine_first_win(data):
     data = [line.strip() for line in data]
     boards, moves = parse(data)
 
@@ -102,9 +132,9 @@ def determine_win(data):
                 winning_board = board
                 winning_move = move
                 break
+        # dump_state(boards, move)
         if winning_board:
             break
-
 
     winning_score = sum(
         winning_board[y][x][0]
@@ -113,7 +143,6 @@ def determine_win(data):
         if winning_board[y][x][1] == False
     )
     return winning_score, move
-        # dump_state(boards, move)
 
 
 def dump_state(boards, move):
@@ -158,9 +187,15 @@ sample = io.StringIO("""
  2  0 12  3  7
 """.strip())
 def test_uut_part1():
-    winning_score, winning_move = determine_win(sample)
+    winning_score, winning_move = determine_first_win(sample)
     assert 188 == winning_score
     assert 24 == winning_move
+
+def test_uut_part2():
+    winning_score, winning_move = determine_last_win(sample)
+    assert 148 == winning_score
+    assert 13 == winning_move
+
 
 
 sample2 = io.StringIO("""
@@ -216,8 +251,8 @@ def run_around_tests():
 
 if __name__ == "__main__":
     with open('input04.txt', 'rt') as f:
-        winning_score, last_move = determine_win(f)
+        winning_score, last_move = determine_first_win(f)
         print('part1:', winning_score * last_move)
         f.seek(0)
-        # x, y = compute_final_position2(f)
-        # print("part2:", x * y)
+        winning_score, last_move = determine_last_win(f)
+        print('part2:', winning_score * last_move)
