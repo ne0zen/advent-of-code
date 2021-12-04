@@ -79,13 +79,11 @@ def has_win(board):
     """
     # -> []
     for winning_row in WINNING_PATTERNS:
-        points = [
-            board[y][x][0]
+        if all(
+            board[y][x][1]
             for x, y in winning_row
-            if board[y][x][1] == True
-        ]
-        if len(points) == BOARD_SIZE:
-            return points
+        ):
+            return True
 
     return None
 
@@ -99,6 +97,8 @@ def determine_last_win(data):
     last_winner = None
     for move in moves:
         for i, board in enumerate(boards):
+            if win_state[i]:
+                continue
             board = apply_move(board, move)
             if has_win(board):
                 # print(f"board #{i} won")
