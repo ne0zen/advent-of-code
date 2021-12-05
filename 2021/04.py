@@ -28,10 +28,6 @@ def parse(data):
             next(data_iter) # blank line?
         except StopIteration:
             pass
-        # try:
-        #     next(data_iter) # blank line?
-        # except StopIteration:
-        #     pass
 
         if board:
             boards.append(board)
@@ -45,6 +41,7 @@ def apply_move(board, move):
             node = board[y][x]
             if node[0] == move:
                 node[1] = True
+                return board
     return board
 
 
@@ -154,6 +151,7 @@ def dump_state(boards, move):
         dboards.append(dboard)
     input()
 
+
 def dump_board(board):
     for row in board:
         yield ' '.join(
@@ -195,7 +193,6 @@ def test_uut_part2():
     winning_score, winning_move = determine_last_win(sample)
     assert 148 == winning_score
     assert 13 == winning_move
-
 
 
 sample2 = io.StringIO("""
