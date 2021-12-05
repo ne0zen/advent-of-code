@@ -45,11 +45,11 @@ def interpolate(start: str, end: str, allow_diagonal=True):
     return points
 
 
-def count_overlaps(data):
+def count_overlaps(data, allow_diagonal=False):
     overlaps_by_point = collections.defaultdict(lambda: 0)
     for line in data:
         start, end = line.split(' -> ')
-        for point in interpolate(start, end):
+        for point in interpolate(start, end, allow_diagonal):
             overlaps_by_point[point] += 1
 
     num_overlaps = sum([
@@ -65,6 +65,8 @@ if __name__ == "__main__":
         overlaps = count_overlaps(f)
         print('part1:', overlaps)
         f.seek(0)
+        overlaps = count_overlaps(f, allow_diagonal=True)
+        print('part2:', overlaps)
 
 
 import io
@@ -99,7 +101,9 @@ def test_uut_part1():
     ['9,7', '7,9', True, [(9, 7), (8, 8), (7, 9)]],
 ])
 def test_interpolate(start, end, allow_diagonal, expected_points):
-    assert sorted(expected_points) == sorted(interpolate(start, end))
+    assert sorted(expected_points) == sorted(
+        interpolate(start, end, allow_diagonal)
+    )
 
 
 @pytest.fixture(autouse=True)
