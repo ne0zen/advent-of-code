@@ -55,14 +55,21 @@ def compute_min_expensive_distance(data):
     min_cost = float('inf')
     min_cost_pos = None
     for possible_dest in range(min_pos, max_pos + 1):
-        cost_to_move_crabs_to_dest = sum(
-            compute_expensive_cost(possible_dest, crab_pos)
-            for crab_pos in crab_positions
-        )
+        cost_to_move_crabs_to_dest = 0
+        bailed_early = False
+        for crab_pos in crab_positions:
+            cost_to_move_this_crab = compute_expensive_cost(possible_dest, crab_pos)
 
-        if cost_to_move_crabs_to_dest < min_cost:
-            min_cost_pos = possible_dest
+            # if this is true, we chould bail now as we'll never beat current min
+            if cost_to_move_this_crab + cost_to_move_crabs_to_dest > min_cost:
+                bailed_early = True
+                break
+
+            cost_to_move_crabs_to_dest += cost_to_move_this_crab
+
+        if not bailed_early and cost_to_move_crabs_to_dest < min_cost:
             min_cost = cost_to_move_crabs_to_dest
+            min_cost_pos = possible_dest
 
     return min_cost
 
