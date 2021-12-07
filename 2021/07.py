@@ -32,18 +32,22 @@ def compute_expensive_cost(src: int, dest: int):
     if src == dest:
         return 0
 
-    lb = min(src, dest)     # 3
-    ub = max(src, dest) + 1 # 4
-    span = range(ub - lb)
-    return sum(span)
+    # perf improvement, sum(ub - lb) == diff*(diff+1)/2
+    # 1 should NOT be added to upper bound
+    lb = min(src, dest)
+    # +1 because range() is not inclusive (and we want it to be)
+    ub = max(src, dest) + 1
+    return sum(range(ub - lb))
 
 
 def compute_min_expensive_distance(data):
     """
-    compute point with minimal cost
+    determine point with minimal cost
     to move crab positions to
 
-    cost to move N spaces = sum(1..N)
+    cost to move N spaces = 1+2+3...+N
+
+    returns:int cost to move crabs to that point
     """
     crab_positions = crab_positions_from_data(data)
 
@@ -51,24 +55,23 @@ def compute_min_expensive_distance(data):
     min_pos = 0
     max_pos = max(crab_positions)
 
-
     min_cost = float('inf')
     min_cost_pos = None
     for possible_dest in range(min_pos, max_pos + 1):
-        cost_to_move_crabs_to_dest = 0
+        move_crabs_cost = 0
         bailed_early = False
         for crab_pos in crab_positions:
-            cost_to_move_this_crab = compute_expensive_cost(possible_dest, crab_pos)
+            move_crab_cost = compute_expensive_cost(possible_dest, crab_pos)
 
             # if this is true, we chould bail now as we'll never beat current min
-            if cost_to_move_this_crab + cost_to_move_crabs_to_dest > min_cost:
+            if move_crab_cost + move_crabs_cost > min_cost:
                 bailed_early = True
                 break
 
-            cost_to_move_crabs_to_dest += cost_to_move_this_crab
+            move_crabs_cost += move_crab_cost
 
-        if not bailed_early and cost_to_move_crabs_to_dest < min_cost:
-            min_cost = cost_to_move_crabs_to_dest
+        if not bailed_early and move_crabs_cost < min_cost:
+            min_cost = move_crabs_cost
             min_cost_pos = possible_dest
 
     return min_cost
