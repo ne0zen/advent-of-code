@@ -5,6 +5,7 @@ import collections
 import functools
 import operator
 
+
 def parse(raw_data):
     return [
         [int(c) for c in line.strip()]
@@ -15,20 +16,21 @@ def parse(raw_data):
 def at(board, x, y):
     x_len = len(board[0])
     y_len = len(board)
-    if not 0 <= x < x_len or not 0 <= y < y_len:
+    outside_board = not 0 <= x < x_len or not 0 <= y < y_len
+    if outside_board:
+        # makes border appear really tall
         return float('inf')
     else:
+        # returns height @ x, y
         return board[y][x]
-
-    return board[y][x]
 
 
 def gen_around(board, x, y):
     for coord in [
-        (x - 1, y),
-        (x + 1, y),
-        (x, y - 1),
-        (x, y + 1),
+        (x - 1, y),  # left
+        (x + 1, y),  # right
+        (x, y - 1),  # up
+        (x, y + 1),  # down
     ]:
         yield (coord, at(board, *coord))
 
@@ -69,9 +71,8 @@ def find_basins(board):
             this_val = at(board, *coord)
 
             for a_coord, val in gen_around(board, *coord):
-                if val not in (9, float('inf')) and val > this_val:
+                if val < 9 and val > this_val and a_coord not in basin_coords:
                     queue.append(a_coord)
-
         yield basin_coords
 
 
@@ -110,13 +111,19 @@ def sample():
     """.strip().split('\n'))
 
 
-# def test_find_low_spots(sample):
-#     assert [1, 0, 5, 5] == find_low_spots(sample)
+def test_find_low_spots(sample):
+    assert [1, 0, 5, 5] == [
+        at(sample, *coord)
+        for coord in find_low_spots(sample)
+    ]
 
 
 def test_find_risk_levels_sum(sample):
     assert 15 == find_sum_risk_levels(sample)
 
+
+def test_find_basins(sample):
+    assert [3, 9, 14, 9] == [len(basin) for basin in find_basins(sample)]
 
 def test_find_basin_area_total(sample):
     assert 1134 == find_basin_area_total(sample)
