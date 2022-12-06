@@ -3,22 +3,22 @@
 import collections
 
 def part1(data):
-    expected_unique = 4
-    window = collections.deque([None] * expected_unique, maxlen=expected_unique)
+    window_size = 4
+    window = collections.deque([None] * window_size, maxlen=window_size)
 
     for idx, c in enumerate(data.strip(), start=1):
         window.append(c)
-        if None not in window and len(set(window)) == expected_unique:
+        if idx >= window_size and len(set(window)) == window_size:
             return idx
 
 
 def part2(data):
-    expected_unique = 14
-    window = collections.deque([None] * expected_unique, maxlen=expected_unique)
+    window_size = 14
+    window = collections.deque([None] * window_size, maxlen=window_size)
 
     for idx, c in enumerate(data.strip(), start=1):
         window.append(c)
-        if None not in window and len(set(window)) == expected_unique:
+        if idx >= window_size and len(set(window)) == window_size:
             return idx
 
 
