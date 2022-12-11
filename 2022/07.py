@@ -24,7 +24,7 @@ class Node:
         self.children.setdefault(node.name, node)
         return self
 
-    @property
+    @functools.cached_property
     def size(self):
         if self._size > 0:
             return self._size
@@ -53,7 +53,7 @@ class Node:
         path += self.name
         return path
 
-
+@functools.cache
 def build_tree(data):
     # build tree
     split_cmds = CMD_PREFIX.split(data)[1:]
@@ -99,29 +99,39 @@ def build_tree(data):
     return root
 
 
+def find_dirs(root):
+    results = []
+
+    to_visit = [root]
+    while to_visit and (node := to_visit.pop()):
+        if not isinstance(node, Node):
+            return
+
+        if node.children:
+            yield node
+
+        for name, child in node.children.items():
+            to_visit.append(child)
+    return results
+
+
 def part1(data):
     result = 0
     UPPER_BOUND = 100000
     root = build_tree(data)
-
-    results = []
-    def visit(node):
-        if not isinstance(node, Node):
-            return
-        if node.children and node.size <= UPPER_BOUND:
-            results.append(node)
-
-        for name, child in node.children.items():
-            visit(child)
-    visit(root)
-    assert results
-    return sum(d.size for d in results)
+    return sum(d.size for d in find_dirs(root) if d.size < UPPER_BOUND)
 
 
 def part2(data):
-    result = 0
+    TOTAL_SIZE = 70000000
+    NEEDED_FOR_UPDATE = 30000000
+    root = build_tree(data)
+    FREE_SPACE = TOTAL_SIZE - root.size
 
-    return result
+    dirs = find_dirs(root)
+    for dir in sorted(dirs, key=lambda d: d.size):
+        if FREE_SPACE + dir.size >= NEEDED_FOR_UPDATE:
+            return dir.name, dir.size
 
 
 import pytest
@@ -155,8 +165,8 @@ $ ls
 def test_part1_sample():
     assert 95437 == part1(sample)
 
-# def test_part2_sample():
-#     assert 70 == part2(sample)
+def test_part2_sample():
+    assert 'd', 24933642 == part2(sample)
 
 
 if __name__ == "__main__":
@@ -164,5 +174,5 @@ if __name__ == "__main__":
         result = part1(f.read())
         print('part1:', result)
         f.seek(0)
-        result = part2(f)
+        result = part2(f.read())
         print('part2:', result)
