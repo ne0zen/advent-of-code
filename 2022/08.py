@@ -26,20 +26,31 @@ def at(board, x, y):
         return board[y][x]
 
 def to_north(board, x, y):
-    for ny in range(y):
-        yield x, ny
+    return [
+        (x, ny)
+        for ny in range(y - 1 , -1, -1)
+    ]
 
-def to_south(board, x, y):
-    for ny in range(y + 1, len(board)):
-        yield x, ny
-
-def to_east(board, x, y):
-    for nx in range(x + 1, len(board[0])):
-        yield nx, y
 
 def to_west(board, x, y):
-    for nx in range(x):
-        yield nx, y
+    return [
+        (nx, y)
+        for nx in range(x - 1, -1, -1)
+    ]
+
+
+def to_east(board, x, y):
+    return [
+        (nx, y)
+        for nx in range(x + 1, len(board[y]), 1)
+    ]
+
+
+def to_south(board, x, y):
+    return [
+        (x, ny)
+        for ny in range(y + 1, len(board), 1)
+    ]
 
 
 def is_high_spot(board, x, y):
@@ -61,30 +72,77 @@ def find_high_spots(data):
             if is_high_spot(data, x, y):
                 yield (x, y)
 
+def part1(data):
+    import copy
+    high_spots = list(find_high_spots(data))
 
-# def find_basins(board):
-#     for l_x, l_y in find_low_spots(board):
-#         basin_coords = set()
-#         queue = collections.deque([(l_x, l_y)])
+    # print("board:"); dump(sample)
 
-#         while len(queue) > 0:
-#             coord = queue.popleft()
-#             basin_coords.add(coord)
-#             this_val = at(board, *coord)
-
-#             for a_coord, val in gen_around(board, *coord):
-#                 if val < 9 and val > this_val and a_coord not in basin_coords:
-#                     queue.append(a_coord)
-#         yield basin_coords
+    # print("\nmarked:")
+    # marked = copy.deepcopy(sample)
+    # for x, y in high_spots:
+    #     marked[y][x] = 'H'
+    # dump(marked)
+    return len(high_spots)
 
 
-# def find_basin_area_total(board):
-#     basin_sizes = []
-#     for basin in find_basins(board):
-#         # dump_basin(board, basin)
-#         basin_sizes.append(len(basin))
+def find_viewing_distance(board, coord, coords):
+    result = 0
+    x, y = coord
+    if (x == 0
+        or x + 1 == len(board[0])
+        or y == 0
+        or y + 1 == len(board)
+    ):
+        return 0
 
-#     return functools.reduce(operator.mul, sorted(basin_sizes)[-3:], 1)
+    this_height = at(board, *coord)
+    coords_can_see = []
+    for other in coords:
+        x, y = coord
+        coords_can_see.append(other)
+        # stop if you reach an edge
+        if (
+            x == 0 or y == 0
+            or x + 1 == len(board[y]) or y + 1 == len(board)
+        ):
+            break
+        elif at(board, *other) >= this_height:
+            # at the first tree that is the same height
+            # or taller than the tree under consideration
+            break
+    # print(
+    #     "coords:", coords,
+    #     "this_height:", this_height,
+    #     "heights:", [at(board, *other) for other in coords],
+    #     "coords_can_see:", coords_can_see,
+    # )
+    return len(coords_can_see)
+
+    return result
+
+
+def find_viewing_distances(board, *coord):
+    # print("@", coord)
+    return [
+        find_viewing_distance(board, coord, func(board, *coord))
+        for func in [to_north, to_west, to_east, to_south]
+    ]
+
+
+def part2(data):
+    def scenic_score(x, y):
+        return functools.reduce(
+            operator.mul,
+            find_viewing_distances(data, x, y),
+        )
+
+    scenic_scores = [
+        scenic_score(x, y)
+        for y in range(len(data))
+        for x in range(len(data[y]))
+    ]
+    return max(scenic_scores)
 
 def dump(board):
     for line in board:
@@ -104,24 +162,25 @@ def sample():
     """.strip().split('\n'))
 
 def test_part1(sample):
-    import copy
-    high_spots = list(find_high_spots(sample))
+    assert 21 == part1(sample)
 
-    # print("board:"); dump(sample)
 
-    # print("\nmarked:")
-    # marked = copy.deepcopy(sample)
-    # for x, y in high_spots:
-    #     marked[y][x] = 'H'
-    # dump(marked)
+def test_find_viewing_distances(sample):
+    assert at(sample, 2, 1) == 5
+    assert [1, 1, 2, 2] == find_viewing_distances(sample, 2, 1)
+    assert at(sample, 2, 3) == 5
+    assert [2, 2, 2, 1] == find_viewing_distances(sample, 2, 3)
 
-    assert 21 == len(high_spots)
+
+def test_part2(sample):
+    assert 8 == part2(sample)
 
 if __name__ == "__main__":
     with open('input08.txt', 'rt') as f:
         data = parse(f)
-    # 1835 too low
-    print('part1:', len(list(find_high_spots(data))))
+    print('part1:', part1(data))
+    print('part2:', part2(data))
+
 
     # draws a picture of all basins
     # for line in data:
