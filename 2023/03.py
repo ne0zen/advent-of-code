@@ -14,8 +14,7 @@ class Loc:
     y: int
 
 
-def find_numbers_and_number_location_groups(schematic):
-    numbers = []
+def find_number_location_groups(schematic):
     number_location_groups = []
     # to understand comments in code, consider this sample input line
     # 467..114
@@ -43,7 +42,6 @@ def find_numbers_and_number_location_groups(schematic):
                 elif current_number:
                     # 467..114
                     #    ^
-                    numbers.append(current_number)
                     number_location_groups.append(current_number_locs)
                     current_number_locs = []
                     current_number = 0
@@ -52,16 +50,13 @@ def find_numbers_and_number_location_groups(schematic):
                 if x == len(row) - 1 and was_number and current_number:
                     # 467..114
                     #        ^
-                    numbers.append(current_number)
                     number_location_groups.append(current_number_locs)
                 # print(''.join(row))
                 # print(' ' * x + '^')
                 # print("numbers:", numbers)
 
         if y == len(schematic) - 1 and was_number:
-            numbers.append(current_number)
             number_location_groups.append(current_number_locs)
-            number_location_groups = []
             current_number_locs = []
             current_number = 0
 
@@ -69,7 +64,7 @@ def find_numbers_and_number_location_groups(schematic):
         print(f"Error @ {x=} {y=} {current_number=}", file=sys.stderr)
         raise
 
-    return numbers, number_location_groups
+    return number_location_groups
 
 
 def build_search_locs(location_group):
@@ -95,9 +90,8 @@ def find_part_numbers(schematic_str):
         except IndexError:
             return '.'
 
-    numbers, number_loc_groups = find_numbers_and_number_location_groups(schematic)
+    number_loc_groups = find_number_location_groups(schematic)
     if DEBUG:
-        print("numbers:", numbers, file=sys.stderr)
         from pprint import pprint; pprint(number_loc_groups)
     part_numbers = []
 
@@ -105,15 +99,16 @@ def find_part_numbers(schematic_str):
         found_sym = False
         for search_loc in build_search_locs(loc_group):
             c = char_at(search_loc.x, search_loc.y)
-            number = numbers[idx]
+            number = int(''.join(
+                char_at(loc.x, loc.y)
+                for loc in loc_group)
+            )
             if c != '.' and c in string.punctuation:
                 if DEBUG:
                     print(f'{c} found near {number} @ {search_loc}', file=sys.stderr)
                 part_numbers.append(number)
                 found_sym = True
                 break
-        # if found_sym:
-        #     break
     return part_numbers
 
 
@@ -128,9 +123,8 @@ def find_gear_ratios(schematic_str):
         except IndexError:
             return '.'
 
-    numbers, number_loc_groups = find_numbers_and_number_location_groups(schematic)
+    number_loc_groups = find_number_location_groups(schematic)
     if DEBUG:
-        print("numbers:", numbers, file=sys.stderr)
         from pprint import pprint; pprint(number_loc_groups)
 
     gear_locations = []
@@ -142,6 +136,7 @@ def find_gear_ratios(schematic_str):
                 gear_locations.append(Loc(x, y))
     if DEBUG:
         print("gear_locations:", gear_locations, file=sys.stderr)
+
     gear_ratios = []
     for gear_location in gear_locations:
         matches = []
@@ -149,10 +144,13 @@ def find_gear_ratios(schematic_str):
         for group_idx, location_group in enumerate(number_loc_groups):
             lhs = search_locs
             rhs = set(location_group)
-            if DEBUG:
-                print(f"attempting match between {''.join(char_at(loc.x, loc.y) for loc in search_locs)} and {rhs=}", file=sys.stderr)
+            # if DEBUG:
+            #     print(f"attempting match between {''.join(char_at(loc.x, loc.y) for loc in search_locs)} and {rhs=}", file=sys.stderr)
             if intersection := search_locs & set(location_group):
-                number = numbers[group_idx]
+                number = int(''.join(
+                    char_at(loc.x, loc.y)
+                    for loc in location_group
+                ))
                 matches.append(number)
                 found_match = True
                 if DEBUG:
@@ -163,6 +161,7 @@ def find_gear_ratios(schematic_str):
             gear_ratios.append(gear_ratio)
 
     return gear_ratios
+
 
 import io     # for StringIO
 import pytest # for decorator
@@ -186,7 +185,13 @@ def test_find_numbers():
         [c for x, c in enumerate(line.strip())]
         for y, line in enumerate(sample.read().splitlines())
     ]
-    numbers, loc_groups = find_numbers_and_number_location_groups(schematic)
+    numbers = [
+        int(
+            ''.join(schematic[loc.y][loc.x]
+            for loc in location_group
+        ))
+        for location_group in find_number_location_groups(schematic)
+    ]
     expected_numbers = list(map(int, "467 114 35 633 617 58 592 755 664 598".strip().split()))
     assert expected_numbers == numbers
 
