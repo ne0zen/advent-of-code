@@ -3,6 +3,7 @@
 
 from dataclasses import dataclass
 import itertools
+import math
 
 from parse import parse
 
@@ -60,22 +61,25 @@ def part2(data):
 
     tree = build_tree(idata)
 
-    steps = 0
-    cur = tree['AAA']
+    currents = [tree[key] for key in tree.keys() if key.endswith('A')]
+    periods = []
 
-    for next_dir in itertools.cycle(directions):
-        if cur.id == 'ZZZ':
-            break
+    for i in range(len(currents)):
+        steps = 0
+        cur = currents[i]
 
-        if 'L' == next_dir:
-            cur = tree[cur.left]
-        elif 'R' == next_dir:
-            cur = tree[cur.right]
-        steps += 1
-    return steps
-    result = []
-    return result
+        for next_dir in itertools.cycle(directions):
+            if cur.id.endswith('Z'):
+                break
 
+            if 'L' == next_dir:
+                cur = tree[cur.left]
+            elif 'R' == next_dir:
+                cur = tree[cur.right]
+            steps += 1
+        periods.append(steps)
+
+    return math.lcm(*periods)
 
 
 ##  Tests
@@ -114,10 +118,21 @@ def test_uut_part1_sample2():
     """
     assert 6 == part1(sample2)
 
+
+part2_sample = io.StringIO("""
+LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)
+""".strip())
 def test_uut_part2():
-    """
-    """
-    assert True
+    assert 6 == part2(part2_sample)
 
 @pytest.fixture(autouse=True)
 def run_around_tests():
@@ -126,6 +141,7 @@ def run_around_tests():
     # run after
     sample.seek(0)
     sample2.seek(0)
+    part2_sample.seek(0)
 
 
 if __name__ == "__main__":
